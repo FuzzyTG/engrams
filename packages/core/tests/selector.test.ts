@@ -89,17 +89,19 @@ describe("selectTopics", () => {
     assert.equal(result[0].tier, 2);
   });
 
-  it("fills tier 1 before tier 2", () => {
+  it("ranks by weight across tiers, not tier priority", () => {
     const result = selectTopics(
       input([
         entry({ file: "t2.md", origin: "other", participants: ["agent-a"], weight: 10 }),
         entry({ file: "t1.md", origin: "agent-a", participants: ["agent-a"], weight: 1 }),
       ]),
     );
-    assert.equal(result[0].file, "t1.md");
-    assert.equal(result[0].tier, 1);
-    assert.equal(result[1].file, "t2.md");
-    assert.equal(result[1].tier, 2);
+    assert.equal(result[0].file, "t2.md");
+    assert.equal(result[0].tier, 2);
+    assert.equal(result[0].weight, 10);
+    assert.equal(result[1].file, "t1.md");
+    assert.equal(result[1].tier, 1);
+    assert.equal(result[1].weight, 1);
   });
 
   it("sorts by weight descending within a tier", () => {
@@ -143,7 +145,7 @@ describe("selectTopics", () => {
     assert.equal(result.length, 1);
   });
 
-  it("fills all slots from tier 1 when enough tier 1 topics exist", () => {
+  it("selects highest-weight topics across tiers", () => {
     const entries = [
       entry({ file: "t1-a.md", weight: 3, origin: "agent-a" }),
       entry({ file: "t1-b.md", weight: 2, origin: "agent-a" }),
@@ -151,7 +153,15 @@ describe("selectTopics", () => {
       entry({ file: "t2.md", weight: 10, origin: "other", participants: ["agent-a"] }),
     ];
     const result = selectTopics(input(entries, { topN: 3 }));
-    assert.ok(result.every((t) => t.tier === 1));
+    assert.equal(result[0].file, "t2.md");
+    assert.equal(result[0].weight, 10);
+    assert.equal(result[0].tier, 2);
+    assert.equal(result[1].file, "t1-a.md");
+    assert.equal(result[1].weight, 3);
+    assert.equal(result[1].tier, 1);
+    assert.equal(result[2].file, "t1-b.md");
+    assert.equal(result[2].weight, 2);
+    assert.equal(result[2].tier, 1);
   });
 
   it("handles invalid last_seen dates as non-matching", () => {
@@ -180,5 +190,53 @@ describe("selectTopics", () => {
 
     assert.equal(resultMorning.length, resultEvening.length, "cutoff should not vary by time of day");
     assert.equal(resultMorning.length, 1);
+  });
+
+  it("selects by weight across tiers (issue #10 scenario)", () => {
+    // CTO agent with 4 topics: 2 Tier 1 (origin), 1 Tier 2 (participant), 1 evergreen Tier 1
+    const entries = [
+      entry({
+        file: "deep-dive.md",
+        title: "Deep dive",
+        weight: 4,
+        origin: "cto",
+        participants: ["cto", "eng-lead"],
+      }),
+      entry({
+        file: "q2-vendor.md",
+        title: "Q2 vendor evaluation",
+        weight: 3,
+        origin: "procurement",
+        participants: ["cto", "procurement"],
+      }),
+      entry({
+        file: "compliance.md",
+        title: "Compliance review",
+        weight: 2,
+        origin: "cto",
+        participants: ["cto", "legal"],
+      }),
+      entry({
+        file: "blog-post.md",
+        title: "Blog post",
+        weight: 2,
+        origin: "cto",
+        participants: ["cto"],
+        evergreen: true,
+        last_seen: "2026-01-01",
+      }),
+    ];
+    const result = selectTopics(input(entries, { agentId: "cto", topN: 3 }));
+
+    assert.equal(result.length, 3);
+    // Weight 4 (T1) first
+    assert.equal(result[0].file, "deep-dive.md");
+    assert.equal(result[0].tier, 1);
+    // Weight 3 (T2) second — higher weight beats lower-weight T1
+    assert.equal(result[1].file, "q2-vendor.md");
+    assert.equal(result[1].tier, 2);
+    // Weight 2 tie: compliance vs blog-post, both T1, tiebreak by more recent last_seen
+    assert.equal(result[2].file, "compliance.md");
+    assert.equal(result[2].tier, 1);
   });
 });

@@ -50,7 +50,7 @@ describe("resolveWikiLinks", () => {
     const body = "See [[guide.md]] for details.";
     const result = resolveWikiLinks(body, basePath);
 
-    assert.equal(result, "See (see: Getting Started Guide) for details.");
+    assert.equal(result, "See (see: Getting Started Guide — guide.md) for details.");
   });
 
   it("resolves wiki-link to humanized filename when file exists without title", () => {
@@ -60,14 +60,14 @@ describe("resolveWikiLinks", () => {
     const body = "See [[quick-start.md]] for details.";
     const result = resolveWikiLinks(body, basePath);
 
-    assert.equal(result, "See (see: Quick Start) for details.");
+    assert.equal(result, "See (see: Quick Start — quick-start.md) for details.");
   });
 
   it("resolves wiki-link to humanized filename when file does not exist", () => {
     const body = "See [[missing-file.md]] for details.";
     const result = resolveWikiLinks(body, basePath);
 
-    assert.equal(result, "See (see: Missing File) for details.");
+    assert.equal(result, "See (see: Missing File — missing-file.md) for details.");
   });
 
   it("resolves multiple wiki-links in the same body", () => {
@@ -79,7 +79,7 @@ describe("resolveWikiLinks", () => {
     const body = "Ref [[a.md]] and [[b.md]].";
     const result = resolveWikiLinks(body, basePath);
 
-    assert.equal(result, "Ref (see: Alpha) and (see: Bravo).");
+    assert.equal(result, "Ref (see: Alpha — a.md) and (see: Bravo — b.md).");
   });
 
   it("handles body with no wiki-links", () => {
@@ -101,7 +101,7 @@ describe("resolveWikiLinks", () => {
 
     assert.equal(
       result,
-      "(see: Existing Resource) and (see: Gone Resource)",
+      "(see: Existing Resource — exists.md) and (see: Gone Resource — gone-resource.md)",
     );
   });
 
@@ -116,7 +116,7 @@ describe("resolveWikiLinks", () => {
     const body = "See [[OpenClaw/learning-companion-guide.md]].";
     const result = resolveWikiLinks(body, basePath);
 
-    assert.equal(result, "See (see: Learning Companion Guide).");
+    assert.equal(result, "See (see: Learning Companion Guide — learning-companion-guide.md).");
   });
 
   it("blocks path traversal outside base path", () => {
@@ -136,7 +136,7 @@ describe("resolveWikiLinks", () => {
     const body = "Check [[no-title-field.md]].";
     const result = resolveWikiLinks(body, basePath);
 
-    assert.equal(result, "Check (see: No Title Field).");
+    assert.equal(result, "Check (see: No Title Field — no-title-field.md).");
   });
 
   it("does not leak absolute paths in output", () => {
@@ -147,6 +147,6 @@ describe("resolveWikiLinks", () => {
     const result = resolveWikiLinks(body, basePath);
 
     assert.ok(!result.includes(basePath), "Output should not contain absolute base path");
-    assert.equal(result, "Link: (see: My Secret)");
+    assert.equal(result, "Link: (see: My Secret — secret-path.md)");
   });
 });

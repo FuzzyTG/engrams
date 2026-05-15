@@ -7,8 +7,10 @@ import type { SelectionInput, SelectedTopic, IndexEntry } from "./types.js";
  *    the time window. Exclude entries where the agent is neither origin nor
  *    participant.
  * 2. Tier: Tier 1 = origin matches agentId; Tier 2 = participant but not origin.
- * 3. Sort within each tier: weight descending, then more-recent last_seen first.
- * 4. Fill slots from Tier 1 first, then Tier 2.
+ *    Tier is used only for labeling, not ranking priority.
+ * 3. Sort all eligible entries together by weight descending, tiebreak by
+ *    most recent last_seen.
+ * 4. Take top N.
  */
 export function selectTopics(input: SelectionInput): SelectedTopic[] {
   const { index, agentId, timeWindowHours, topN, now } = input;
@@ -29,39 +31,23 @@ export function selectTopics(input: SelectionInput): SelectedTopic[] {
     return isOrigin || isParticipant;
   });
 
-  // Step 2: split into tiers
-  const tier1: IndexEntry[] = [];
-  const tier2: IndexEntry[] = [];
+  // Step 2: assign tiers and merge
+  const candidates: { entry: IndexEntry; tier: 1 | 2 }[] = eligible.map(entry => ({
+    entry,
+    tier: entry.origin === agentId ? 1 : 2,
+  }));
 
-  for (const entry of eligible) {
-    if (entry.origin === agentId) {
-      tier1.push(entry);
-    } else {
-      tier2.push(entry);
-    }
-  }
+  // Step 3: sort by weight descending, tiebreak by most recent last_seen
+  candidates.sort((a, b) => {
+    if (b.entry.weight !== a.entry.weight) return b.entry.weight - a.entry.weight;
+    return compareDates(b.entry.last_seen, a.entry.last_seen);
+  });
 
-  // Step 3: sort within each tier
-  const sorter = (a: IndexEntry, b: IndexEntry): number => {
-    if (b.weight !== a.weight) return b.weight - a.weight;
-    // Tiebreak: more recent last_seen first
-    return compareDates(b.last_seen, a.last_seen);
-  };
-
-  tier1.sort(sorter);
-  tier2.sort(sorter);
-
-  // Step 4: fill top N
+  // Step 4: take top N
   const result: SelectedTopic[] = [];
-
-  for (const entry of tier1) {
+  for (const c of candidates) {
     if (result.length >= topN) break;
-    result.push({ file: entry.file, title: entry.title, weight: entry.weight, tier: 1 });
-  }
-
-  for (const entry of tier2) {
-    if (result.length >= topN) break;
-    result.push({ file: entry.file, title: entry.title, weight: entry.weight, tier: 2 });
+    result.push({ file: c.entry.file, title: c.entry.title, weight: c.entry.weight, tier: c.tier });
   }
 
   return result;

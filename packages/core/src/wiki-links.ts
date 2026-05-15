@@ -74,11 +74,11 @@ export function resolveWikiLinks(body: string, basePath: string): string {
     if (existsSync(absolute)) {
       const title = extractFrontmatterTitle(absolute);
       if (title) {
-        return `(see: ${title})`;
+        return `(see: ${title} — ${filename})`;
       }
-      return `(see: ${humanizeFilename(filename)})`;
+      return `(see: ${humanizeFilename(filename)} — ${filename})`;
     }
 
-    return `(see: ${humanizeFilename(filename)})`;
+    return `(see: ${humanizeFilename(filename)} — ${filename})`;
   });
 }

@@ -200,7 +200,7 @@ describe("renderOutput", () => {
       engramsPath: dir,
       maxBytes: 2048,
     });
-    assert.ok(result.includes("(see: Linked)"));
+    assert.ok(result.includes("(see: Linked — linked.md)"));
     assert.ok(!result.includes("[[linked.md]]"));
     assert.ok(!result.includes(linkedFile), "Should not contain absolute path of linked file");
   });

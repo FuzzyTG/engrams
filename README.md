@@ -4,6 +4,25 @@ Engrams injects relevant knowledge topics into agent context at session start so
 
 Engrams does not write or extract topics. Topic creation is manual or handled by a separate dreaming component.
 
+## Why
+
+AI agents forget. They lose knowledge across sessions — behavioral principles, learned patterns, prior decisions — not because the knowledge doesn't exist, but because nothing puts it in context when it matters.
+
+Engrams is the long-term memory layer. Plain markdown topics, a time-windowed selection algorithm, and platform-level injection that the agent can't ignore. No vector database, no embeddings — just the right knowledge at the right time.
+
+Pairs with [ThreadMark](https://github.com/FuzzyTG/Threadmark) for short-term session continuity.
+
+### Engrams vs ThreadMark
+
+| | ThreadMark | Engrams |
+|---|---|---|
+| Question it answers | "Where was I?" | "What should I know?" |
+| Memory type | Short-term | Long-term |
+| Scope | Last few exchanges | Accumulated knowledge |
+| Ownership | Per-agent, isolated | Cross-agent, shared |
+| Lifespan | 24 hours | Durable (evergreen or time-windowed) |
+| Trigger | Vague follow-ups ("continue", "do it again") | Every message (active matching) |
+
 ## How it works
 
 - Managed hook id: `engrams`

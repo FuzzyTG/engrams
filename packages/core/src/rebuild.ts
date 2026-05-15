@@ -37,7 +37,7 @@ export async function rebuildIndex(engramsPath: string): Promise<void> {
       title: topic.title,
       weight: topic.weight,
       origin: topic.origin,
-      last_seen: topic.lastSeen,
+      last_seen: topic.last_seen,
       participants: topic.participants,
       evergreen: topic.evergreen,
     });

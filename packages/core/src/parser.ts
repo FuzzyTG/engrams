@@ -147,12 +147,12 @@ export async function parseTopic(filePath: string): Promise<Topic | null> {
 
   const datePattern = /^\d{4}-\d{2}-\d{2}$/;
   const created = String(fields.created ?? "");
-  const lastSeen = String(fields.last_seen ?? "");
+  const last_seen = String(fields.last_seen ?? "");
   if (created !== "" && !datePattern.test(created)) {
     console.warn(`engrams: invalid date format for 'created' in ${filePath}: ${created}`);
   }
-  if (lastSeen !== "" && !datePattern.test(lastSeen)) {
-    console.warn(`engrams: invalid date format for 'last_seen' in ${filePath}: ${lastSeen}`);
+  if (last_seen !== "" && !datePattern.test(last_seen)) {
+    console.warn(`engrams: invalid date format for 'last_seen' in ${filePath}: ${last_seen}`);
   }
 
   return {
@@ -160,7 +160,7 @@ export async function parseTopic(filePath: string): Promise<Topic | null> {
     title: fields.title as string,
     created,
     origin: String(fields.origin ?? ""),
-    lastSeen,
+    last_seen,
     weight: typeof fields.weight === "number" ? fields.weight : 0,
     participants: Array.isArray(fields.participants)
       ? fields.participants

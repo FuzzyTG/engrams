@@ -130,7 +130,7 @@ describe("rebuildIndex", () => {
     assert.equal(index.length, 0);
   });
 
-  it("maps lastSeen to last_seen in the index entry", async () => {
+  it("maps last_seen through to the index entry", async () => {
     writeTopic(dir, "topic.md", {
       title: "Check last_seen mapping",
       weight: 1,

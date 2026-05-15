@@ -41,7 +41,7 @@ describe("parseTopic", () => {
     assert.equal(topic!.title, "API responses use snake_case");
     assert.equal(topic!.created, "2026-03-15");
     assert.equal(topic!.origin, "backend");
-    assert.equal(topic!.lastSeen, "2026-05-10");
+    assert.equal(topic!.last_seen, "2026-05-10");
     assert.equal(topic!.weight, 3);
     assert.deepEqual(topic!.participants, ["backend", "frontend"]);
     assert.equal(topic!.evergreen, true);
@@ -232,7 +232,7 @@ describe("parseTopic", () => {
     const topic = await parseTopic(filePath);
     assert.notEqual(topic, null);
     assert.equal(topic!.created, "yesterday");
-    assert.equal(topic!.lastSeen, "2026/05/10");
+    assert.equal(topic!.last_seen, "2026/05/10");
   });
 
   it("handles block-style YAML lists", async () => {

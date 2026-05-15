@@ -9,6 +9,16 @@ const plugin = {
   id: "engrams",
   name: "Engrams",
   description: "Injects relevant knowledge topics into agent context at bootstrap",
+  configSchema: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      path: { type: "string", description: "Absolute path to the Engrams directory" },
+      timeWindowHours: { type: "number", default: 84, description: "Time window in hours for candidate selection" },
+      topN: { type: "number", default: 3, description: "Maximum number of topics to inject" },
+    },
+    required: ["path"],
+  },
   register(_api: PluginApi) {
     // No event listeners — Engrams reads at bootstrap via managed hook only
   }

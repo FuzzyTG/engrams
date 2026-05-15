@@ -1,0 +1,203 @@
+import { describe, it, beforeEach, afterEach } from "node:test";
+import assert from "node:assert/strict";
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import { injectEngramsContext } from "../src/bootstrap.js";
+import type { BootstrapContext } from "../src/bootstrap.js";
+
+function writeTopicFile(
+  dir: string,
+  filename: string,
+  title: string,
+  body: string,
+  overrides: Record<string, string | number | boolean> = {},
+): void {
+  const fields = {
+    origin: "test-agent",
+    last_seen: "2026-05-14",
+    weight: 3,
+    participants: "[test-agent]",
+    evergreen: false,
+    ...overrides,
+  };
+  writeFileSync(
+    join(dir, filename),
+    [
+      "---",
+      `title: ${title}`,
+      `origin: ${fields.origin}`,
+      `last_seen: ${fields.last_seen}`,
+      `weight: ${fields.weight}`,
+      `participants: ${fields.participants}`,
+      `evergreen: ${fields.evergreen}`,
+      "---",
+      "",
+      body,
+    ].join("\n"),
+  );
+}
+
+function writeIndex(dir: string, entries: unknown[]): void {
+  writeFileSync(join(dir, "engrams.json"), JSON.stringify(entries, null, 2));
+}
+
+describe("injectEngramsContext", () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "engrams-bootstrap-"));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it("injects context when topics are available", async () => {
+    writeTopicFile(dir, "topic-a.md", "Topic A", "Body of topic A.");
+    writeIndex(dir, [
+      {
+        file: "topic-a.md",
+        title: "Topic A",
+        weight: 3,
+        origin: "test-agent",
+        last_seen: "2026-05-14",
+        participants: ["test-agent"],
+        evergreen: false,
+      },
+    ]);
+
+    const context: BootstrapContext = {
+      agentId: "test-agent",
+      bootstrapFiles: [],
+    };
+
+    const result = await injectEngramsContext(context, { path: dir });
+
+    assert.equal(result, true);
+    assert.equal(context.bootstrapFiles!.length, 1);
+    assert.equal(context.bootstrapFiles![0].path, "ENGRAMS_CONTEXT.md");
+    assert.ok(context.bootstrapFiles![0].content.includes("Topic A"));
+    assert.ok(context.bootstrapFiles![0].content.includes("Body of topic A."));
+  });
+
+  it("returns false when no topics match the agent", async () => {
+    writeTopicFile(dir, "topic.md", "Topic", "Body.", {
+      origin: "other-agent",
+      participants: "[other-agent]",
+    });
+    writeIndex(dir, [
+      {
+        file: "topic.md",
+        title: "Topic",
+        weight: 3,
+        origin: "other-agent",
+        last_seen: "2026-05-14",
+        participants: ["other-agent"],
+        evergreen: false,
+      },
+    ]);
+
+    const context: BootstrapContext = {
+      agentId: "test-agent",
+      bootstrapFiles: [],
+    };
+
+    const result = await injectEngramsContext(context, { path: dir });
+    assert.equal(result, false);
+    assert.equal(context.bootstrapFiles!.length, 0);
+  });
+
+  it("returns false when path is not configured", async () => {
+    const context: BootstrapContext = { agentId: "test-agent" };
+    const result = await injectEngramsContext(context, {});
+    assert.equal(result, false);
+  });
+
+  it("returns false when engrams.json does not exist", async () => {
+    const emptyDir = mkdtempSync(join(tmpdir(), "engrams-empty-"));
+    const context: BootstrapContext = {
+      agentId: "test-agent",
+      bootstrapFiles: [],
+    };
+
+    const result = await injectEngramsContext(context, { path: emptyDir });
+    assert.equal(result, false);
+    rmSync(emptyDir, { recursive: true, force: true });
+  });
+
+  it("returns false when engrams.json is malformed", async () => {
+    writeFileSync(join(dir, "engrams.json"), "not valid json{{{");
+
+    const context: BootstrapContext = {
+      agentId: "test-agent",
+      bootstrapFiles: [],
+    };
+
+    const result = await injectEngramsContext(context, { path: dir });
+    assert.equal(result, false);
+  });
+
+  it("initializes bootstrapFiles array if not present", async () => {
+    writeTopicFile(dir, "topic.md", "Init Test", "Content.");
+    writeIndex(dir, [
+      {
+        file: "topic.md",
+        title: "Init Test",
+        weight: 3,
+        origin: "test-agent",
+        last_seen: "2026-05-14",
+        participants: ["test-agent"],
+        evergreen: false,
+      },
+    ]);
+
+    const context: BootstrapContext = { agentId: "test-agent" };
+    const result = await injectEngramsContext(context, { path: dir });
+
+    assert.equal(result, true);
+    assert.ok(Array.isArray(context.bootstrapFiles));
+    assert.equal(context.bootstrapFiles!.length, 1);
+  });
+
+  it("respects custom topN config", async () => {
+    for (let i = 0; i < 5; i++) {
+      writeTopicFile(dir, `topic-${i}.md`, `Topic ${i}`, `Body ${i}.`, {
+        weight: 5 - i,
+      });
+    }
+    writeIndex(
+      dir,
+      Array.from({ length: 5 }, (_, i) => ({
+        file: `topic-${i}.md`,
+        title: `Topic ${i}`,
+        weight: 5 - i,
+        origin: "test-agent",
+        last_seen: "2026-05-14",
+        participants: ["test-agent"],
+        evergreen: false,
+      })),
+    );
+
+    const context: BootstrapContext = {
+      agentId: "test-agent",
+      bootstrapFiles: [],
+    };
+
+    const result = await injectEngramsContext(context, {
+      path: dir,
+      topN: 1,
+    });
+
+    assert.equal(result, true);
+    const content = context.bootstrapFiles![0].content;
+    assert.ok(content.includes("Topic 0"));
+    assert.ok(!content.includes("Topic 1"));
+  });
+
+  it("returns false when pluginConfig is undefined", async () => {
+    const context: BootstrapContext = { agentId: "test-agent" };
+    const result = await injectEngramsContext(context, undefined);
+    assert.equal(result, false);
+  });
+});

@@ -92,10 +92,14 @@ export async function injectEngramsContext(
       context.bootstrapFiles = [];
     }
 
-    context.bootstrapFiles.push({
-      path: CONTEXT_FILE_NAME,
-      content,
-    });
+    if (context.bootstrapFiles.some(f => f.path === CONTEXT_FILE_NAME)) {
+      return false;
+    }
+
+    context.bootstrapFiles = [
+      ...context.bootstrapFiles,
+      { path: CONTEXT_FILE_NAME, content },
+    ];
 
     return true;
   } catch (err) {

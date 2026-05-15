@@ -200,4 +200,58 @@ describe("injectEngramsContext", () => {
     const result = await injectEngramsContext(context, undefined);
     assert.equal(result, false);
   });
+
+  it("does not duplicate ENGRAMS_CONTEXT.md on repeated calls", async () => {
+    writeTopicFile(dir, "topic.md", "Dup Test", "Content.");
+    writeIndex(dir, [
+      {
+        file: "topic.md",
+        title: "Dup Test",
+        weight: 3,
+        origin: "test-agent",
+        last_seen: "2026-05-14",
+        participants: ["test-agent"],
+        evergreen: false,
+      },
+    ]);
+
+    const context: BootstrapContext = {
+      agentId: "test-agent",
+      bootstrapFiles: [],
+    };
+
+    const first = await injectEngramsContext(context, { path: dir });
+    assert.equal(first, true);
+    assert.equal(context.bootstrapFiles!.length, 1);
+
+    const second = await injectEngramsContext(context, { path: dir });
+    assert.equal(second, false);
+    assert.equal(context.bootstrapFiles!.length, 1);
+  });
+
+  it("does not mutate a shared bootstrapFiles array reference", async () => {
+    writeTopicFile(dir, "topic.md", "Mut Test", "Content.");
+    writeIndex(dir, [
+      {
+        file: "topic.md",
+        title: "Mut Test",
+        weight: 3,
+        origin: "test-agent",
+        last_seen: "2026-05-14",
+        participants: ["test-agent"],
+        evergreen: false,
+      },
+    ]);
+
+    const shared: Array<{ path: string; content: string }> = [];
+    const context: BootstrapContext = {
+      agentId: "test-agent",
+      bootstrapFiles: shared,
+    };
+
+    await injectEngramsContext(context, { path: dir });
+
+    assert.equal(shared.length, 0, "original array must not be mutated");
+    assert.equal(context.bootstrapFiles!.length, 1);
+  });
 });

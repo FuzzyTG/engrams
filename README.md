@@ -1,5 +1,7 @@
 # Engrams
 
+![Engrams comic: long-term memory for AI agents](docs/assets/engrams.png)
+
 Engrams injects relevant knowledge topics into agent context at session start so the agent applies learned knowledge without being asked.
 
 Engrams does not write or extract topics. Topic creation is manual or handled by a separate dreaming component.

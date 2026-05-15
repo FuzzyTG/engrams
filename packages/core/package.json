@@ -1,0 +1,22 @@
+{
+  "name": "@engrams/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    },
+    "./*": {
+      "types": "./dist/src/*.d.ts",
+      "default": "./dist/src/*.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "test": "node --test dist/tests/*.test.js",
+    "check": "npm run build && npm test"
+  }
+}

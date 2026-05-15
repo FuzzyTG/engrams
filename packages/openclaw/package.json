@@ -1,0 +1,20 @@
+{
+  "name": "@engrams/openclaw",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/src/plugin.js",
+  "types": "dist/src/plugin.d.ts",
+  "scripts": {
+    "build": "tsc -b tsconfig.json && mkdir -p dist/hooks/engrams && cp hooks/engrams/HOOK.md dist/hooks/engrams/HOOK.md",
+    "test": "node --test dist/tests/*.test.js",
+    "check": "npm run build && npm test",
+    "package:standalone": "scripts/package-standalone.sh"
+  },
+  "dependencies": {
+    "@engrams/core": "file:../core"
+  },
+  "openclaw": {
+    "hooks": ["./dist/hooks/engrams"],
+    "extensions": ["./dist/src/plugin.js"]
+  }
+}

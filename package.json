@@ -1,0 +1,27 @@
+{
+  "name": "engrams",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/core",
+    "packages/openclaw"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "check": "npm run build && npm run test",
+    "package:openclaw": "npm run build && npm run package:standalone --workspace=packages/openclaw"
+  },
+  "openclaw": {
+    "hooks": ["./packages/openclaw/dist/hooks/engrams"],
+    "extensions": ["./packages/openclaw/dist/src/plugin.js"]
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

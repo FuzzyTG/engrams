@@ -18,19 +18,18 @@ Topics are plain markdown files with YAML frontmatter:
 
 ```markdown
 ---
-title: Deep dive outputs go to Learning/
-created: 2026-05-07
-origin: CTO
-last_seen: 2026-05-12
-weight: 4
-participants: [CTO]
+title: API responses use snake_case
+created: 2026-03-15
+origin: backend
+last_seen: 2026-05-10
+weight: 3
+participants: [backend, frontend]
 evergreen: true
 ---
 
-Deep dive output (notes, analysis, summaries) → save to Learning/,
-not Clippings/. Clippings is for raw input, Learning is for
-processed output. For the full deep dive methodology:
-[[OpenClaw/Learning-Companion-Guide.md]]
+All API responses use snake_case field names, not camelCase.
+Frontend transforms to camelCase at the boundary.
+[[docs/api-style-guide.md]]
 ```
 
 ## Selection algorithm

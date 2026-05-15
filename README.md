@@ -1,0 +1,100 @@
+# Engrams
+
+Engrams injects relevant knowledge topics into agent context at session start so the agent applies learned knowledge without being asked.
+
+Engrams does not write or extract topics. Topic creation is manual or handled by a separate dreaming component.
+
+## How it works
+
+- Managed hook id: `engrams`
+- Plugin id: `engrams`
+- Reads `engrams.json` index at `agent:bootstrap`
+- Selects top 3 topics based on time window, weight, and agent relevance
+- Injects `ENGRAMS_CONTEXT.md` during OpenClaw `agent:bootstrap`
+
+## Topic format
+
+Topics are plain markdown files with YAML frontmatter:
+
+```markdown
+---
+title: Deep dive outputs go to Learning/
+created: 2026-05-07
+origin: CTO
+last_seen: 2026-05-12
+weight: 4
+participants: [CTO]
+evergreen: true
+---
+
+Deep dive output (notes, analysis, summaries) → save to Learning/,
+not Clippings/. Clippings is for raw input, Learning is for
+processed output. For the full deep dive methodology:
+[[OpenClaw/Learning-Companion-Guide.md]]
+```
+
+## Selection algorithm
+
+1. Filter by time window (configurable, default 84 hours). Evergreen topics bypass this filter.
+2. Exclude topics where the current agent is neither origin nor participant.
+3. Rank: tier 1 (origin match) first, then tier 2 (participant match). Within each tier, sort by weight.
+4. Inject top 3.
+
+## Install
+
+Download the latest release tarball from the [Releases page](../../releases).
+
+```sh
+tar -xzf engrams-openclaw-v*.tar.gz
+cd engrams-openclaw-v*/
+./install.sh --dry-run   # preview what will be changed
+./install.sh --yes       # install hooks and plugin
+```
+
+> **For AI agents:** Run `./install.sh --yes` for fresh installs, or `./install.sh --upgrade --yes` to upgrade an existing installation. Do NOT read the script and run individual `openclaw` commands manually — the install order matters and partial runs corrupt the gateway config.
+
+Restart the OpenClaw gateway after install. Verify:
+
+```sh
+openclaw hooks list      # should show engrams
+openclaw plugins list    # should show engrams loaded
+```
+
+To upgrade an existing installation:
+
+```sh
+./install.sh --upgrade --dry-run   # preview
+./install.sh --upgrade --yes       # uninstall existing, then clean install
+```
+
+To uninstall:
+
+```sh
+./uninstall.sh --dry-run   # preview
+./uninstall.sh --yes       # remove hooks, plugin, and extension files
+```
+
+Restart the OpenClaw gateway after uninstall.
+
+## Rebuilding the index
+
+After creating or editing topic files, rebuild the index:
+
+```sh
+npx engrams rebuild
+```
+
+This scans all `.md` files in the Engrams directory and regenerates `engrams.json`.
+
+## Development
+
+Requires Node.js ≥ 22.12.0.
+
+```sh
+git clone <repo>
+cd engrams
+npm install
+npm run check            # build + test
+```
+
+Release artifacts are built automatically by CI on tag push (`git tag v0.1.0 && git push --tags`).

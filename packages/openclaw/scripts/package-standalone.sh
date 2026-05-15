@@ -37,6 +37,10 @@ if [ ! -f "$PACKAGE_DIR/dist/hooks/engrams/HOOK.md" ]; then
   echo "Error: dist/hooks/engrams/HOOK.md not found. Run 'npm run build' first." >&2
   exit 1
 fi
+if [ ! -f "$PACKAGE_DIR/dist/hooks/engrams/handler.js" ]; then
+  echo "Error: dist/hooks/engrams/handler.js not found. Run 'npm run build' first." >&2
+  exit 1
+fi
 
 # ── 3. Stage compiled adapter (dist/src + dist/hooks) ─────────────────────────
 mkdir -p "$STAGE_DIR/dist"

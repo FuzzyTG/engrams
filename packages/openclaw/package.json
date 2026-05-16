@@ -1,6 +1,6 @@
 {
   "name": "@engrams/openclaw",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "type": "module",
   "main": "dist/src/plugin.js",
   "types": "dist/src/plugin.d.ts",

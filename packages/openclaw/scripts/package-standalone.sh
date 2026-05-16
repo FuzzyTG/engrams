@@ -175,8 +175,8 @@ echo ""
 read -rp "Path to your knowledge topics directory: " ENGRAMS_PATH
 if [ -n "$ENGRAMS_PATH" ]; then
   echo "Configuring engrams plugin with path: $ENGRAMS_PATH"
-  "$OPENCLAW_BIN" plugins config engrams path "$ENGRAMS_PATH" 2>/dev/null || \
-    echo "Note: set 'path' manually in plugins.entries.engrams.config if the above failed."
+  "$OPENCLAW_BIN" config set "plugins.entries.engrams.config.path" "$ENGRAMS_PATH" 2>/dev/null || \
+    echo "Note: set 'plugins.entries.engrams.config.path' manually with OpenClaw config if the above failed."
 fi
 
 echo "Install complete. Restart OpenClaw gateway to load Engrams."
